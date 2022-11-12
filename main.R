@@ -5,11 +5,16 @@ library(stringr)
 
 # package <- "glmnet"
 package <- "ggplot2"
-# package <- commandArgs(trailingOnly = TRUE)[1]
+# package <- "gg"
+package <- commandArgs(trailingOnly = TRUE)[1]
 
 message("Retrieving package databases...")
 db <- as_tibble(available.packages())
 db_line <- db |> filter(Package == !!package)
+if (nrow(db_line) == 0) {
+    message(str_c("error: package '", package, "' was not found."))
+    quit(status = 1)
+}
 # db |> select(Package, LinkingTo) |> filter(!is.na(LinkingTo)) |> View()
 
 # db |>
@@ -83,6 +88,7 @@ tbl_Suggests <- parse_dependency(db_line$Suggests)
 # tbl_Suggests
 
 tbl_pkgbuild_depends <- bind_rows(tbl_Depends, tbl_Imports, tbl_LinkingTo) |> unique()
+tbl_pkgbuild_optdepends <- tbl_Suggests
 # tbl_pkgbuild_depends
 
 # for (i in 1:nrow(tbl_pkgbuild_depends)) {
@@ -95,21 +101,14 @@ tbl_pkgbuild_depends <- bind_rows(tbl_Depends, tbl_Imports, tbl_LinkingTo) |> un
 # pacman -Fl r | grep -Po '(?<=usr/lib/R/library/)[^/]+(?=/$)' | sed 's/[^ ]\+/"&"/g' | tr '\n' ',' | sed 's/,$/\n/' | sed 's/.*/c(&)/'
 builtin_packages <- c("KernSmooth", "MASS", "Matrix", "base", "boot", "class", "cluster", "codetools", "compiler", "datasets", "foreign", "grDevices", "graphics", "grid", "lattice", "methods", "mgcv", "nlme", "nnet", "parallel", "rpart", "spatial", "splines", "stats", "stats4", "survival", "tcltk", "tools", "translations", "utils")
 
-master <- tbl_pkgbuild_depends |>
-    filter(!package %in% builtin_packages) |>
-    mutate(across(, ~ replace_na(., ""))) |>
-    # pmap_chr(str_c)
-    # transmute(s = str_c(package, sign, version))
-    # summarize(str_c(package, sign, version))
-    mutate(pkg = if_else(package == "R", "r", str_c("r-", package))) |>
-    # mutate(pkg = case_when(
-    #     package == "R" ~ "r",
-    #     # package %in% builtin_packages ~ NA_character_,
-    #     TRUE ~ str_c("r-", package),
-    # )) |>
-    mutate(with_ver = str_c("    '", pkg, sign, version, "'"))
+make_pkgbuild_vars <- function(var, tbl) {
+    master <- tbl |>
+        filter(!package %in% builtin_packages) |>
+        mutate(across(, ~ replace_na(., ""))) |>
+        mutate(pkg = if_else(package == "R", "r", str_c("r-", package))) |>
+        mutate(with_ver = str_c("    '", pkg, sign, version, "'"))
+    cat(str_c(var, "=("), master$with_ver, ")", sep = "\n")
+}
 
-# oneline <- str_c(master$with_ver, collapse = "\n")
-# cat("depends=(\n", oneline, "\n)\n", sep = "\n")
-cat("depends=(", master$with_ver, ")", sep = "\n")
-# str_(str_c("'", ttt, "'"))
+make_pkgbuild_vars("depends", tbl_pkgbuild_depends)
+make_pkgbuild_vars("optdepends", tbl_pkgbuild_optdepends)
