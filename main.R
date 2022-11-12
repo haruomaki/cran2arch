@@ -10,6 +10,7 @@ package <- commandArgs(trailingOnly = TRUE)[1]
 
 message("Retrieving package databases...")
 db <- as_tibble(available.packages())
+# db <- tibble(tools::CRAN_package_db())
 db_line <- db |> filter(Package == !!package)
 if (nrow(db_line) == 0) {
     message(str_c("error: package '", package, "' was not found."))
@@ -37,6 +38,9 @@ if (nrow(db_line) == 0) {
 
 
 
+printf <- function(x, ...) {
+    cat(sprintf(x, ...))
+}
 
 # Splits one string into a vector. Empty string results NULL.
 str_split_one <- function(string, pattern) {
@@ -110,5 +114,10 @@ make_pkgbuild_vars <- function(var, tbl) {
     cat(str_c(var, "=("), master$with_ver, ")", sep = "\n")
 }
 
+printf("_cranname=%s\n\n", db_line$Package)
+printf("_cranver=%s\n\n", db_line$Version)
+# printf("pkgdesc=\"%s\"\n\n", db_line$Title)
+printf("license=('%s')\n\n", db_line$License)
 make_pkgbuild_vars("depends", tbl_pkgbuild_depends)
+cat("\n")
 make_pkgbuild_vars("optdepends", tbl_pkgbuild_optdepends)
