@@ -9,8 +9,8 @@ package <- "ggplot2"
 package <- commandArgs(trailingOnly = TRUE)[1]
 
 message("Retrieving package databases...")
-db <- as_tibble(available.packages())
-# db <- tibble(tools::CRAN_package_db())
+# db <- as_tibble(available.packages())
+db <- tibble(tools::CRAN_package_db())
 db_line <- db |> filter(Package == !!package)
 if (nrow(db_line) == 0) {
     message(str_c("error: package '", package, "' was not found."))
@@ -116,7 +116,7 @@ make_pkgbuild_vars <- function(var, tbl) {
 
 printf("_cranname=%s\n\n", db_line$Package)
 printf("_cranver=%s\n\n", db_line$Version)
-# printf("pkgdesc=\"%s\"\n\n", db_line$Title)
+printf("pkgdesc=\"%s\"\n\n", db_line$Title)
 printf("license=('%s')\n\n", db_line$License)
 make_pkgbuild_vars("depends", tbl_pkgbuild_depends)
 cat("\n")
