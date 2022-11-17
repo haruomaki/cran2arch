@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
-echo "title..."
-l=$(curl https://cran.r-project.org/web/packages/ggplot2/index.html 2>/dev/null | grep -Po "(?<=<h2>).*(?=</h2>)" | sed 's/.*: //')
-echo $l
+# echo "title..."
+# l=$(curl https://cran.r-project.org/web/packages/ggplot2/index.html 2>/dev/null | grep -Po "(?<=<h2>).*(?=</h2>)" | sed 's/.*: //')
+# echo $l
+
+if [ ! -d /tmp/tmpcran2arch ]; then
+    mkdir /tmp/tmpcran2arch
+fi
+
+cd /tmp/tmpcran2arch
+pwd
+echo $1
+

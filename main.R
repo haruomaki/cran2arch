@@ -109,7 +109,7 @@ make_pkgbuild_vars <- function(var, tbl) {
     master <- tbl |>
         filter(!package %in% builtin_packages) |>
         mutate(across(, ~ replace_na(., ""))) |>
-        mutate(pkg = if_else(package == "R", "r", str_c("r-", package))) |>
+        mutate(pkg = if_else(package == "R", "r", str_c("r-", tolower(package)))) |>
         mutate(with_ver = str_c("    '", pkg, sign, version, "'"))
     cat(str_c(var, "=("), master$with_ver, ")", sep = "\n")
 }
