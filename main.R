@@ -8,14 +8,19 @@ package <- "ggplot2"
 # package <- "gg"
 package <- commandArgs(trailingOnly = TRUE)[1]
 
-message("Retrieving package databases...")
 # db <- as_tibble(available.packages())
-db <- tibble(tools::CRAN_package_db())
+if (!file.exists("/tmp/cran2archdb.rds")) {
+    message("Retrieving package databases '/tmp/cran2archdb.rds' ...")
+    saveRDS(tools::CRAN_package_db(), "/tmp/cran2archdb.rds")
+}
+db <- readRDS("/tmp/cran2archdb.rds") |> as_tibble()
 db_line <- db |> filter(Package == !!package)
 if (nrow(db_line) == 0) {
     message(str_c("error: package '", package, "' was not found."))
     quit(status = 1)
 }
+
+message("----------------")
 # db |> select(Package, LinkingTo) |> filter(!is.na(LinkingTo)) |> View()
 
 # db |>
@@ -37,10 +42,6 @@ if (nrow(db_line) == 0) {
 # l[5] |> str_extract("(?<=\\().*(?=\\)$)") # 括弧の中身を取り出す
 
 
-
-printf <- function(x, ...) {
-    cat(sprintf(x, ...))
-}
 
 # Splits one string into a vector. Empty string results NULL.
 str_split_one <- function(string, pattern) {
@@ -91,6 +92,7 @@ tbl_Suggests <- parse_dependency(db_line$Suggests)
 # tbl_LinkingTo
 # tbl_Suggests
 
+pkgbuild_pkgdeps <- str_remove_all(db_line$Title, "\n") # Long descriptions may contain \n.
 tbl_pkgbuild_depends <- bind_rows(tbl_Depends, tbl_Imports, tbl_LinkingTo) |> unique()
 tbl_pkgbuild_optdepends <- tbl_Suggests
 # tbl_pkgbuild_depends
@@ -109,15 +111,26 @@ make_pkgbuild_vars <- function(var, tbl) {
     master <- tbl |>
         filter(!package %in% builtin_packages) |>
         mutate(across(, ~ replace_na(., ""))) |>
-        mutate(pkg = if_else(package == "R", "r", str_c("r-", tolower(package)))) |>
+        mutate(pkg = if_else(package == "R", "r", str_c("r-", str_to_lower(package)))) |>
         mutate(with_ver = str_c("    '", pkg, sign, version, "'"))
-    cat(str_c(var, "=("), master$with_ver, ")", sep = "\n")
+    c(str_glue("{var}=("), master$with_ver, ")") |> str_c(collapse = "\n")
 }
 
-printf("_cranname=%s\n\n", db_line$Package)
-printf("_cranver=%s\n\n", db_line$Version)
-printf("pkgdesc=\"%s\"\n\n", db_line$Title)
-printf("license=('%s')\n\n", db_line$License)
-make_pkgbuild_vars("depends", tbl_pkgbuild_depends)
-cat("\n")
-make_pkgbuild_vars("optdepends", tbl_pkgbuild_optdepends)
+
+template <- readLines("PKGBUILD.template")
+pkgbuild <- ""
+
+for (line in template) {
+    new <- switch(line,
+        "_cranname=" = str_glue("_cranname={db_line$Package}"),
+        "_cranver=" = str_glue("_cranver={db_line$Version}"),
+        "pkgdesc=" = str_glue("pkgdesc=\"{pkgbuild_pkgdeps}\""),
+        "license=" = str_glue("license=('{db_line$License}')"),
+        "depends=" = make_pkgbuild_vars("depends", tbl_pkgbuild_depends),
+        "optdepends=" = make_pkgbuild_vars("optdepends", tbl_pkgbuild_optdepends),
+        line
+    )
+    pkgbuild <- str_c(pkgbuild, new, "\n")
+}
+
+cat(pkgbuild)
