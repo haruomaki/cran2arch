@@ -12,7 +12,7 @@ license=
 depends=
 optdepends=
 source=("https://cran.r-project.org/src/contrib/${_cranname}_${_cranver}.tar.gz")
-sha512sums=()
+sha512sums=('xxx')
 
 build() {
     R CMD INSTALL ${_cranname}_${_cranver}.tar.gz -l "${srcdir}"

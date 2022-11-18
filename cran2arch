@@ -22,7 +22,6 @@ if (nrow(db_line) == 0) {
     quit(status = 1)
 }
 
-message("----------------")
 # db |> select(Package, LinkingTo) |> filter(!is.na(LinkingTo)) |> View()
 
 # db |>
@@ -94,7 +93,7 @@ tbl_Suggests <- parse_dependency(db_line$Suggests)
 # tbl_LinkingTo
 # tbl_Suggests
 
-pkgbuild_pkgdeps <- str_remove_all(db_line$Title, "\n") # Long descriptions may contain \n.
+pkgbuild_pkgdeps <- str_replace_all(db_line$Title, "\n", " ") # Long descriptions may contain \n.
 tbl_pkgbuild_depends <- bind_rows(tbl_Depends, tbl_Imports, tbl_LinkingTo) |> unique()
 tbl_pkgbuild_optdepends <- tbl_Suggests
 # tbl_pkgbuild_depends
@@ -119,9 +118,17 @@ make_pkgbuild_vars <- function(var, tbl) {
 }
 
 
-template <- readLines("PKGBUILD.template")
+path_local_share <- "~/.local/share/cran2arch/PKGBUILD.template"
+message("Searching for a template file '", path_local_share, "' ...")
+template <- if (file.exists(path_local_share)) {
+    readLines(path_local_share)
+} else {
+    message("Not found.")
+    quit(status = 1)
+}
 pkgbuild <- ""
 
+message("--------------------------------")
 for (line in template) {
     new <- switch(line,
         "_cranname=" = str_glue("_cranname={db_line$Package}"),
