@@ -1,5 +1,5 @@
 # Usage
 
 ```
-Rscript main.R tidyverse
+./cran2arch tidyverse
 ```
