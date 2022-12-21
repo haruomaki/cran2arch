@@ -1,8 +1,25 @@
 #!/usr/bin/env Rscript
 
-if (commandArgs(trailingOnly = TRUE)[1] == "--clean") {
+clean_db <- function() {
     message("Removing '/tmp/cran2archdb.rds' ...")
     file.remove("/tmp/cran2archdb.rds")
+}
+
+if (commandArgs(trailingOnly = TRUE)[1] == "--clean") {
+    clean_db()
+    quit(status = 0)
+}
+
+update_db <- function() {
+    if (file.exists("/tmp/cran2archdb.rds")) {
+        clean_db()
+    }
+    message("Retrieving package databases '/tmp/cran2archdb.rds' ...")
+    saveRDS(tools::CRAN_package_db(), "/tmp/cran2archdb.rds")
+}
+
+if (commandArgs(trailingOnly = TRUE)[1] == "--update") {
+    update_db()
     quit(status = 0)
 }
 
