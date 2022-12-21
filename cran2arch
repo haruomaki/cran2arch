@@ -1,5 +1,11 @@
 #!/usr/bin/env Rscript
 
+if (commandArgs(trailingOnly = TRUE)[1] == "--clean") {
+    message("Removing '/tmp/cran2archdb.rds' ...")
+    file.remove("/tmp/cran2archdb.rds")
+    quit(status = 0)
+}
+
 message("Initializing...")
 library(tidyr)
 library(dplyr) |> suppressMessages()
