@@ -2,13 +2,16 @@
 
 fetch_db <- function(update = FALSE) {
     if (file.exists("/tmp/cran2archdb.rds")) {
+        message("Package databases '/tmp/cran2archdb.rds' found.")
         if (update) {
+            message("Force updating '/tmp/cran2archdb.rds'.")
             clean_db()
         } else {
-            return()
+            return(invisible())
         }
+    } else {
+        message("Retrieving package databases '/tmp/cran2archdb.rds' ...")
     }
-    message("Retrieving package databases '/tmp/cran2archdb.rds' ...")
     saveRDS(tools::CRAN_package_db(), "/tmp/cran2archdb.rds")
 }
 
