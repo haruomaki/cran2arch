@@ -9,9 +9,8 @@ fetch_db <- function(update = FALSE) {
         } else {
             return(invisible())
         }
-    } else {
-        message("Retrieving package databases '/tmp/cran2archdb.rds' ...")
     }
+    message("Retrieving package databases '/tmp/cran2archdb.rds'. It may take some time...")
     saveRDS(tools::CRAN_package_db(), "/tmp/cran2archdb.rds")
 }
 
@@ -27,6 +26,8 @@ load_db <- function() {
 info_db <- function(packages) {
     fetch_db()
     db <- load_db()
+    # options(tibble.width = Inf, width = 10000)
+    # options(crayon.enabled = FALSE)
     print(db |> filter(Package %in% packages))
 }
 
